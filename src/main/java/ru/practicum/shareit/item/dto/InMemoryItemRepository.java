@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item.dto;
 
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.Item;
 
