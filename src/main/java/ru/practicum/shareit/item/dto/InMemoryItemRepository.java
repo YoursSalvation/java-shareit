@@ -73,7 +73,7 @@ public class InMemoryItemRepository implements ItemRepository {
         checkExistenceById(itemId);
         Item existingItem = items.get(itemId);
         if (!Objects.equals(existingItem.getOwnerId(), userId))
-            throw new ForbiddenException("Owner check failed");
+            throw new NotFoundException("Owner check failed");
     }
 
     @Override
