@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.UserService;
 
 import java.util.Collection;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/users")
@@ -20,24 +19,21 @@ public class UserController {
 
     @GetMapping
     public Collection<UserResponseDto> get() {
-        return userService.getList().stream()
-                .filter(Objects::nonNull)
-                .map(UserResponseDto::from)
-                .toList();
+        return userService.getList();
     }
 
     @GetMapping("/{id}")
     public UserResponseDto getById(
             @PathVariable @Positive(message = "User Id not valid") Long id
     ) {
-        return UserResponseDto.from(userService.getById(id));
+        return userService.getById(id);
     }
 
     @PostMapping
     public UserResponseDto post(
             @Valid @RequestBody UserCreateDto userCreateDto
     ) {
-        return UserResponseDto.from(userService.create(userCreateDto.toEntity()));
+        return userService.create(userCreateDto);
     }
 
     @PatchMapping("/{id}")
@@ -45,7 +41,7 @@ public class UserController {
             @Valid @RequestBody UserUpdateDto userUpdateDto,
             @PathVariable @Positive(message = "User Id not valid") Long id
     ) {
-        return UserResponseDto.from(userService.update(userUpdateDto.toEntity(), id));
+        return userService.update(userUpdateDto, id);
     }
 
     @DeleteMapping("/{id}")

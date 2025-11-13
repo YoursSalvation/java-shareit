@@ -11,6 +11,7 @@ public class UserResponseDto {
     private String email;
 
     public static UserResponseDto from(User user) {
+        if (user == null) return null;
         UserResponseDto dto = new UserResponseDto();
         dto.setId(user.getId());
         dto.setName(user.getName());
