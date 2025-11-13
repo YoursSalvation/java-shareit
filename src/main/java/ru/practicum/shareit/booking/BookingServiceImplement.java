@@ -23,7 +23,7 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class BookingServiceImpl implements BookingService {
+public class BookingServiceImplement implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
