@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingStatus;
+import ru.practicum.shareit.item.api.ItemResponseDto;
 import ru.practicum.shareit.serializer.OffsetDateTimeDeserializer;
 import ru.practicum.shareit.serializer.OffsetDateTimeSerializer;
+import ru.practicum.shareit.user.api.UserResponseDto;
 
 import java.time.OffsetDateTime;
 
@@ -14,8 +16,8 @@ import java.time.OffsetDateTime;
 public class BookingResponseDto {
 
     private Long id;
-    private Long booker;
-    private Long item;
+    private UserResponseDto booker;
+    private ItemResponseDto item;
 
     @JsonSerialize(using = OffsetDateTimeSerializer.class)
     @JsonDeserialize(using = OffsetDateTimeDeserializer.class)
@@ -28,14 +30,14 @@ public class BookingResponseDto {
     private BookingStatus status;
 
     public static BookingResponseDto from(Booking booking) {
+        if (booking == null) return null;
         BookingResponseDto dto = new BookingResponseDto();
         dto.setId(booking.getId());
-        dto.setBooker(booking.getBookerId());
-        dto.setItem(booking.getItemId());
+        dto.setBooker(UserResponseDto.from(booking.getBooker()));
+        dto.setItem(ItemResponseDto.from(booking.getItem()));
         dto.setStart(booking.getStart());
         dto.setEnd(booking.getEnd());
         dto.setStatus(booking.getStatus());
         return dto;
     }
-
 }

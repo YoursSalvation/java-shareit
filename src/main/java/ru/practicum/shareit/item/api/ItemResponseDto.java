@@ -10,18 +10,14 @@ public class ItemResponseDto {
     private String name;
     private String description;
     private Boolean available;
-    private Long ownerId;
-    private Long requestId;
 
     public static ItemResponseDto from(Item item) {
+        if (item == null) return null;
         ItemResponseDto dto = new ItemResponseDto();
         dto.setId(item.getId());
         dto.setName(item.getName());
         dto.setDescription(item.getDescription());
         dto.setAvailable(item.getAvailable());
-        dto.setOwnerId(item.getOwnerId());
-        dto.setRequestId(item.getRequestId());
         return dto;
     }
-
 }

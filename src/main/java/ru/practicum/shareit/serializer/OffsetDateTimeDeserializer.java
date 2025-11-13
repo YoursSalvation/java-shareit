@@ -1,6 +1,5 @@
 package ru.practicum.shareit.serializer;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
@@ -19,6 +18,10 @@ public class OffsetDateTimeDeserializer extends StdDeserializer<OffsetDateTime> 
     private DateTimeFormatter formatter;
     private ZoneId zoneId;
 
+    public OffsetDateTimeDeserializer() {
+        super(OffsetDateTime.class);
+    }
+
     @Value("${shareit.api.datetime.format}")
     public void setFormatter(String dateTimeFormat) {
         this.formatter = DateTimeFormatter.ofPattern(dateTimeFormat);
@@ -29,12 +32,8 @@ public class OffsetDateTimeDeserializer extends StdDeserializer<OffsetDateTime> 
         this.zoneId = ZoneId.of(timezone);
     }
 
-    public OffsetDateTimeDeserializer() {
-        super(OffsetDateTime.class);
-    }
-
     @Override
-    public OffsetDateTime deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+    public OffsetDateTime deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         String date = jsonParser.getText();
         return LocalDateTime.parse(date, formatter).atZone(zoneId).toOffsetDateTime();
     }
