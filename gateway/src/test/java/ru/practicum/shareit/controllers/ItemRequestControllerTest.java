@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import ru.practicum.shareit.client.HttpClientService;
 import ru.practicum.shareit.exception.ErrorResponse;
+import ru.practicum.shareit.request.ItemRequestCreateDto;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -87,6 +88,20 @@ public class ItemRequestControllerTest {
         mvc.perform(get("/requests/0").content(""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("Illegal Argument")));
+    }
+
+    @Test
+    void descriptionValidation() throws Exception {
+        // POST
+        ItemRequestCreateDto itemRequestCreateDto = new ItemRequestCreateDto();
+        mvc.perform(post("/requests").content(mapper.writeValueAsString(itemRequestCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        itemRequestCreateDto.setDescription(" ");
+        mvc.perform(post("/requests").content(mapper.writeValueAsString(itemRequestCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
     }
 
     @Test

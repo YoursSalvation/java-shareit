@@ -112,6 +112,26 @@ public class UserControllerTest {
     }
 
     @Test
+    void emailValidation() throws Exception {
+        UserCreateDto userCreateDto = new UserCreateDto();
+        userCreateDto.setName("no matter");
+        mvc.perform(post("/users").content(mapper.writeValueAsString(userCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        userCreateDto.setEmail("");
+        mvc.perform(post("/users").content(mapper.writeValueAsString(userCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        UserUpdateDto userUpdateDto = new UserUpdateDto();
+        userUpdateDto.setEmail("");
+        mvc.perform(patch("/users/1").content(mapper.writeValueAsString(userUpdateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+    }
+
+    @Test
     void notFoundRequests() throws Exception {
         ErrorResponse notFoundResponse = ErrorResponse.builder()
                 .timestamp(Instant.now())

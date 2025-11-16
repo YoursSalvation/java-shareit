@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import ru.practicum.shareit.client.HttpClientService;
 import ru.practicum.shareit.exception.ErrorResponse;
+import ru.practicum.shareit.item.CommentCreateDto;
 import ru.practicum.shareit.item.ItemCreateDto;
 import ru.practicum.shareit.item.ItemUpdateDto;
 
@@ -121,6 +122,61 @@ public class ItemControllerTest {
 
         itemCreateDto.setName(" ");
         mvc.perform(post("/items").content(mapper.writeValueAsString(itemCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+    }
+
+    @Test
+    void descriptionValidation() throws Exception {
+        ItemCreateDto itemCreateDto = new ItemCreateDto();
+        itemCreateDto.setName("name");
+        itemCreateDto.setAvailable(true);
+
+        mvc.perform(post("/items").content(mapper.writeValueAsString(itemCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        itemCreateDto.setDescription(" ");
+        mvc.perform(post("/items").content(mapper.writeValueAsString(itemCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        ItemUpdateDto itemUpdateDto = new ItemUpdateDto();
+        itemUpdateDto.setDescription(" ");
+        mvc.perform(patch("/items/1").content(mapper.writeValueAsString(itemUpdateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+    }
+
+    @Test
+    void availableValidation() throws Exception {
+        ItemCreateDto itemCreateDto = new ItemCreateDto();
+        itemCreateDto.setName("name");
+        itemCreateDto.setDescription("no matter");
+        mvc.perform(post("/items").content(mapper.writeValueAsString(itemCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        String wrongCreateJson = "{\"name\":\"name\",\"description\":\"desc\",\"available\":\"f\"}";
+        mvc.perform(post("/items").content(wrongCreateJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Illegal Argument")));
+
+        String wrongUpdateJson = "{\"available\" : \"f\"}";
+        mvc.perform(patch("/items/1").content(wrongUpdateJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Illegal Argument")));
+    }
+
+    @Test
+    void commentTextValidation() throws Exception {
+        CommentCreateDto commentCreateDto = new CommentCreateDto();
+        mvc.perform(post("/items").content(mapper.writeValueAsString(commentCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        commentCreateDto.setText(" ");
+        mvc.perform(post("/items").content(mapper.writeValueAsString(commentCreateDto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("Validation Failed")));
     }

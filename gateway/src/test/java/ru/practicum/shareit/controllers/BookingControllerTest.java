@@ -109,12 +109,44 @@ public class BookingControllerTest {
 
         mvc.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Validation Failed")));                // null itemId
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
 
         bookingCreateDto.setItemId(-1L);
         mvc.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Validation Failed")));                // negative itemId
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+    }
+
+    @Test
+    void startValidation() throws Exception {
+        BookingCreateDto bookingCreateDto = new BookingCreateDto();
+        bookingCreateDto.setItemId(1L);
+        bookingCreateDto.setEnd(OffsetDateTime.now().plusDays(2));
+
+        mvc.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        bookingCreateDto.setStart(OffsetDateTime.now().minusDays(1));
+        mvc.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+    }
+
+    @Test
+    void endValidation() throws Exception {
+        BookingCreateDto bookingCreateDto = new BookingCreateDto();
+        bookingCreateDto.setItemId(1L);
+        bookingCreateDto.setStart(OffsetDateTime.now().plusDays(1));
+
+        mvc.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
+
+        bookingCreateDto.setEnd(OffsetDateTime.now().minusDays(1));
+        mvc.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Validation Failed")));
     }
 
     @Test
