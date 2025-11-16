@@ -12,18 +12,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import ru.practicum.shareit.client.HttpClientService;
 import ru.practicum.shareit.exception.ErrorResponse;
+import ru.practicum.shareit.item.ItemResponseDtoForItemRequests;
 import ru.practicum.shareit.request.ItemRequestCreateDto;
+import ru.practicum.shareit.request.ItemRequestResponseDto;
+import ru.practicum.shareit.request.ItemRequestResponseSimpleViewDto;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -119,5 +126,71 @@ public class ItemRequestControllerTest {
         mvc.perform(get("/requests/1").content(""))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", is("Not Found")));
+    }
+
+    @Test
+    void wellWork() throws Exception {
+        ItemRequestCreateDto itemRequestCreateDto = new ItemRequestCreateDto();
+        itemRequestCreateDto.setDescription("desc");
+
+        ItemResponseDtoForItemRequests itemResponseDtoForItemRequests = new ItemResponseDtoForItemRequests();
+        itemResponseDtoForItemRequests.setId(1L);
+        itemResponseDtoForItemRequests.setName("name");
+        itemResponseDtoForItemRequests.setOwnerId(3L);
+
+        ItemRequestResponseDto itemRequestResponseDto = new ItemRequestResponseDto();
+        itemRequestResponseDto.setId(1L);
+        itemRequestResponseDto.setDescription("desc");
+        itemRequestResponseDto.setItems(List.of(itemResponseDtoForItemRequests));
+        itemRequestResponseDto.setCreated(OffsetDateTime.now().minusDays(1));
+
+        ItemRequestResponseSimpleViewDto itemRequestResponseSimpleViewDto = new ItemRequestResponseSimpleViewDto();
+        itemRequestResponseSimpleViewDto.setId(1L);
+        itemRequestResponseSimpleViewDto.setDescription("desc");
+        itemRequestResponseSimpleViewDto.setCreated(OffsetDateTime.now().minusDays(1));
+
+        when(httpClientService.post(eq("/requests"), eq(1L), any()))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(itemRequestResponseDto));
+
+        mvc.perform(post("/requests").content(mapper.writeValueAsString(itemRequestCreateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(itemRequestResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$.description", is(itemRequestResponseDto.getDescription())));
+
+        when(httpClientService.get(eq("/requests/1"), eq(1L)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(itemRequestResponseDto));
+
+        mvc.perform(get("/requests/1"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(itemRequestResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$.description", is(itemRequestResponseDto.getDescription())))
+                .andExpect(jsonPath("$.created", is(itemRequestResponseDto.getCreated().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$.items[0].id", is(itemRequestResponseDto.getItems().getFirst().getId().intValue())))
+                .andExpect(jsonPath("$.items[0].name", is(itemRequestResponseDto.getItems().getFirst().getName())))
+                .andExpect(jsonPath("$.items[0].ownerId", is(itemRequestResponseDto.getItems().getFirst().getOwnerId().intValue())));
+
+        when(httpClientService.get(eq("/requests"), eq(1L)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(List.of(itemRequestResponseDto)));
+
+        mvc.perform(get("/requests"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(itemRequestResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$[0].description", is(itemRequestResponseDto.getDescription())))
+                .andExpect(jsonPath("$[0].created", is(itemRequestResponseDto.getCreated().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$[0].items[0].id", is(itemRequestResponseDto.getItems().getFirst().getId().intValue())))
+                .andExpect(jsonPath("$[0].items[0].name", is(itemRequestResponseDto.getItems().getFirst().getName())))
+                .andExpect(jsonPath("$[0].items[0].ownerId", is(itemRequestResponseDto.getItems().getFirst().getOwnerId().intValue())));
+
+        when(httpClientService.get(eq("/requests/all"), eq(1L)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(List.of(itemRequestResponseSimpleViewDto)));
+
+        mvc.perform(get("/requests/all"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(itemRequestResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$[0].description", is(itemRequestResponseDto.getDescription())))
+                .andExpect(jsonPath("$[0].created", is(itemRequestResponseDto.getCreated().atZoneSameInstant(zoneId).format(formatter))));
     }
 }

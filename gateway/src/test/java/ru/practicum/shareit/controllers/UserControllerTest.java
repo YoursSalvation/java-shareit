@@ -17,10 +17,12 @@ import org.springframework.web.context.WebApplicationContext;
 import ru.practicum.shareit.client.HttpClientService;
 import ru.practicum.shareit.exception.ErrorResponse;
 import ru.practicum.shareit.user.UserCreateDto;
+import ru.practicum.shareit.user.UserResponseDto;
 import ru.practicum.shareit.user.UserUpdateDto;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -160,5 +162,64 @@ public class UserControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", is("Not Found")));
+    }
+
+    @Test
+    void wellWork() throws Exception {
+        UserCreateDto userCreateDto = new UserCreateDto();
+        userCreateDto.setEmail("user1@test.ru");
+        userCreateDto.setName("alex");
+
+        UserResponseDto userResponseDto = new UserResponseDto();
+        userResponseDto.setId(1L);
+        userResponseDto.setEmail("user1@test.ru");
+        userResponseDto.setName("alex");
+
+        when(httpClientService.post(eq("/users"), eq(null), any()))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(userResponseDto));
+
+        mvc.perform(post("/users").content(mapper.writeValueAsString(userCreateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email", is(userResponseDto.getEmail())))
+                .andExpect(jsonPath("$.name", is(userResponseDto.getName())));
+
+        UserUpdateDto userUpdateDto = new UserUpdateDto();
+        userUpdateDto.setEmail("new@email.com");
+        userResponseDto.setEmail("new@email.com");
+
+        when(httpClientService.patch(eq("/users/1"), eq(null), any()))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(userResponseDto));
+
+        mvc.perform(patch("/users/1").content(mapper.writeValueAsString(userUpdateDto)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email", is(userResponseDto.getEmail())))
+                .andExpect(jsonPath("$.name", is(userResponseDto.getName())));
+
+        when(httpClientService.get(eq("/users/1"), eq(null)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(userResponseDto));
+
+        mvc.perform(get("/users/1"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email", is(userResponseDto.getEmail())))
+                .andExpect(jsonPath("$.name", is(userResponseDto.getName())));
+
+        List<UserResponseDto> userList = List.of(userResponseDto);
+        when(httpClientService.get(eq("/users"), eq(null)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(userList));
+
+        mvc.perform(get("/users"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].email", is(userResponseDto.getEmail())))
+                .andExpect(jsonPath("$[0].name", is(userResponseDto.getName())));
+
+        when(httpClientService.delete(eq("/users/1"), eq(null)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(null));
+
+        mvc.perform(delete("/users/1"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk());
     }
 }

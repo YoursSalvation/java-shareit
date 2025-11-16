@@ -16,15 +16,20 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import ru.practicum.shareit.booking.BookingCreateDto;
+import ru.practicum.shareit.booking.BookingResponseDto;
+import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.client.HttpClientService;
 import ru.practicum.shareit.exception.ErrorResponse;
+import ru.practicum.shareit.item.ItemResponseDto;
 import ru.practicum.shareit.item.ItemUpdateDto;
+import ru.practicum.shareit.user.UserResponseDto;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -172,6 +177,122 @@ public class BookingControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", is("Not Found")));
+    }
+
+    @Test
+    void wellWork() throws Exception {
+        BookingCreateDto bookingCreateDto = new BookingCreateDto();
+        bookingCreateDto.setItemId(1L);
+        bookingCreateDto.setStart(OffsetDateTime.now().plusDays(1));
+        bookingCreateDto.setEnd(OffsetDateTime.now().plusDays(2));
+
+        UserResponseDto userResponseDto = new UserResponseDto();
+        userResponseDto.setId(1L);
+        userResponseDto.setEmail("mail@yandex.ru");
+        userResponseDto.setName("alex");
+
+        ItemResponseDto itemResponseDto = new ItemResponseDto();
+        itemResponseDto.setId(1L);
+        itemResponseDto.setName("saw");
+        itemResponseDto.setDescription("real saw");
+        itemResponseDto.setAvailable(true);
+
+        BookingResponseDto bookingResponseDto = new BookingResponseDto();
+        bookingResponseDto.setId(1L);
+        bookingResponseDto.setBooker(userResponseDto);
+        bookingResponseDto.setItem(itemResponseDto);
+        bookingResponseDto.setStart(OffsetDateTime.now().plusDays(1));
+        bookingResponseDto.setEnd(OffsetDateTime.now().plusDays(2));
+        bookingResponseDto.setStatus(BookingStatus.WAITING);
+
+        when(httpClientService.post(eq("/bookings"), eq(1L), any()))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(bookingResponseDto));
+
+        mvc.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(bookingResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$.booker.id", is(bookingResponseDto.getBooker().getId().intValue())))
+                .andExpect(jsonPath("$.booker.email", is(bookingResponseDto.getBooker().getEmail())))
+                .andExpect(jsonPath("$.booker.name", is(bookingResponseDto.getBooker().getName())))
+                .andExpect(jsonPath("$.item.id", is(bookingResponseDto.getItem().getId().intValue())))
+                .andExpect(jsonPath("$.item.name", is(bookingResponseDto.getItem().getName())))
+                .andExpect(jsonPath("$.item.description", is(bookingResponseDto.getItem().getDescription())))
+                .andExpect(jsonPath("$.item.available", is(bookingResponseDto.getItem().getAvailable())))
+                .andExpect(jsonPath("$.start", is(bookingResponseDto.getStart().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$.end", is(bookingResponseDto.getEnd().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$.status", is(bookingResponseDto.getStatus().toString())));
+
+        when(httpClientService.patch(eq("/bookings/1?approved=true"), eq(1L), any()))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(bookingResponseDto));
+
+        mvc.perform(patch("/bookings/1?approved=true"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(bookingResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$.booker.id", is(bookingResponseDto.getBooker().getId().intValue())))
+                .andExpect(jsonPath("$.booker.email", is(bookingResponseDto.getBooker().getEmail())))
+                .andExpect(jsonPath("$.booker.name", is(bookingResponseDto.getBooker().getName())))
+                .andExpect(jsonPath("$.item.id", is(bookingResponseDto.getItem().getId().intValue())))
+                .andExpect(jsonPath("$.item.name", is(bookingResponseDto.getItem().getName())))
+                .andExpect(jsonPath("$.item.description", is(bookingResponseDto.getItem().getDescription())))
+                .andExpect(jsonPath("$.item.available", is(bookingResponseDto.getItem().getAvailable())))
+                .andExpect(jsonPath("$.start", is(bookingResponseDto.getStart().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$.end", is(bookingResponseDto.getEnd().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$.status", is(bookingResponseDto.getStatus().toString())));
+
+        when(httpClientService.get(eq("/bookings/1"), eq(1L)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(bookingResponseDto));
+
+        mvc.perform(get("/bookings/1"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(bookingResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$.booker.id", is(bookingResponseDto.getBooker().getId().intValue())))
+                .andExpect(jsonPath("$.booker.email", is(bookingResponseDto.getBooker().getEmail())))
+                .andExpect(jsonPath("$.booker.name", is(bookingResponseDto.getBooker().getName())))
+                .andExpect(jsonPath("$.item.id", is(bookingResponseDto.getItem().getId().intValue())))
+                .andExpect(jsonPath("$.item.name", is(bookingResponseDto.getItem().getName())))
+                .andExpect(jsonPath("$.item.description", is(bookingResponseDto.getItem().getDescription())))
+                .andExpect(jsonPath("$.item.available", is(bookingResponseDto.getItem().getAvailable())))
+                .andExpect(jsonPath("$.start", is(bookingResponseDto.getStart().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$.end", is(bookingResponseDto.getEnd().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$.status", is(bookingResponseDto.getStatus().toString())));
+
+        when(httpClientService.get(eq("/bookings?state=ALL"), eq(1L)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(List.of(bookingResponseDto)));
+
+        mvc.perform(get("/bookings"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(bookingResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$[0].booker.id", is(bookingResponseDto.getBooker().getId().intValue())))
+                .andExpect(jsonPath("$[0].booker.email", is(bookingResponseDto.getBooker().getEmail())))
+                .andExpect(jsonPath("$[0].booker.name", is(bookingResponseDto.getBooker().getName())))
+                .andExpect(jsonPath("$[0].item.id", is(bookingResponseDto.getItem().getId().intValue())))
+                .andExpect(jsonPath("$[0].item.name", is(bookingResponseDto.getItem().getName())))
+                .andExpect(jsonPath("$[0].item.description", is(bookingResponseDto.getItem().getDescription())))
+                .andExpect(jsonPath("$[0].item.available", is(bookingResponseDto.getItem().getAvailable())))
+                .andExpect(jsonPath("$[0].start", is(bookingResponseDto.getStart().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$[0].end", is(bookingResponseDto.getEnd().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$[0].status", is(bookingResponseDto.getStatus().toString())));
+
+        when(httpClientService.get(eq("/bookings/owner?state=ALL"), eq(1L)))
+                .thenReturn(ResponseEntity.status(HttpStatus.OK).body(List.of(bookingResponseDto)));
+
+        mvc.perform(get("/bookings/owner"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(bookingResponseDto.getId().intValue())))
+                .andExpect(jsonPath("$[0].booker.id", is(bookingResponseDto.getBooker().getId().intValue())))
+                .andExpect(jsonPath("$[0].booker.email", is(bookingResponseDto.getBooker().getEmail())))
+                .andExpect(jsonPath("$[0].booker.name", is(bookingResponseDto.getBooker().getName())))
+                .andExpect(jsonPath("$[0].item.id", is(bookingResponseDto.getItem().getId().intValue())))
+                .andExpect(jsonPath("$[0].item.name", is(bookingResponseDto.getItem().getName())))
+                .andExpect(jsonPath("$[0].item.description", is(bookingResponseDto.getItem().getDescription())))
+                .andExpect(jsonPath("$[0].item.available", is(bookingResponseDto.getItem().getAvailable())))
+                .andExpect(jsonPath("$[0].start", is(bookingResponseDto.getStart().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$[0].end", is(bookingResponseDto.getEnd().atZoneSameInstant(zoneId).format(formatter))))
+                .andExpect(jsonPath("$[0].status", is(bookingResponseDto.getStatus().toString())));
     }
 
 }
