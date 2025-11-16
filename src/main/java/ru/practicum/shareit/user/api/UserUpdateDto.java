@@ -3,7 +3,6 @@ package ru.practicum.shareit.user.api;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.validation.AtLeastOneNotNull;
 import ru.practicum.shareit.validation.NotBlankButNullAllowed;
 
@@ -19,12 +18,5 @@ public class UserUpdateDto {
     @Email(message = "Field 'email' should match email mask")
     @Size(min = 3, max = 100, message = "Field 'email' should be from 3 to 100 characters")
     private String email;
-
-    public User toEntity() {
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        return user;
-    }
 
 }
