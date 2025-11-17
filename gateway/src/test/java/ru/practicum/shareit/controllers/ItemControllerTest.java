@@ -322,6 +322,41 @@ public class ItemControllerTest {
                 .andExpect(jsonPath("$.text", is(commentResponseDto.getText())))
                 .andExpect(jsonPath("$.authorName", is(commentResponseDto.getAuthorName())))
                 .andExpect(jsonPath("$.created", is(commentResponseDto.getCreated().atZoneSameInstant(zoneId).format(formatter))));
+    }
 
+    @Test
+    void withoutHeaderRequests() throws Exception {
+        MockMvc mvcWithoutHeader = MockMvcBuilders.webAppContextSetup(context)
+                .defaultRequest(MockMvcRequestBuilders.get("")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
+                .build();
+
+        ItemCreateDto itemCreateDto = new ItemCreateDto();
+        itemCreateDto.setName("name");
+        itemCreateDto.setDescription("desc");
+        itemCreateDto.setAvailable(true);
+        mvcWithoutHeader.perform(post("/items").content(mapper.writeValueAsString(itemCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        ItemUpdateDto itemUpdateDto = new ItemUpdateDto();
+        itemUpdateDto.setName("new name");
+        mvcWithoutHeader.perform(patch("/items/1").content(mapper.writeValueAsString(itemUpdateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(delete("/items/1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/items/1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/items"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
     }
 }

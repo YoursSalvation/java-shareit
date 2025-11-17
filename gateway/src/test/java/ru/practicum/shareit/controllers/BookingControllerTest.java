@@ -295,4 +295,37 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$[0].status", is(bookingResponseDto.getStatus().toString())));
     }
 
+    @Test
+    void withoutHeaderRequests() throws Exception {
+        MockMvc mvcWithoutHeader = MockMvcBuilders.webAppContextSetup(context)
+                .defaultRequest(MockMvcRequestBuilders.get("")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
+                .build();
+
+        BookingCreateDto bookingCreateDto = new BookingCreateDto();
+        bookingCreateDto.setItemId(1L);
+        bookingCreateDto.setStart(OffsetDateTime.now().plusDays(1));
+        bookingCreateDto.setEnd(OffsetDateTime.now().plusDays(2));
+        mvcWithoutHeader.perform(post("/bookings").content(mapper.writeValueAsString(bookingCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(patch("/bookings/1?approved=true"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/bookings/1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/bookings"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/bookings/owner"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+    }
 }

@@ -193,4 +193,32 @@ public class ItemRequestControllerTest {
                 .andExpect(jsonPath("$[0].description", is(itemRequestResponseDto.getDescription())))
                 .andExpect(jsonPath("$[0].created", is(itemRequestResponseDto.getCreated().atZoneSameInstant(zoneId).format(formatter))));
     }
+
+    @Test
+    void withoutHeaderRequests() throws Exception {
+        MockMvc mvcWithoutHeader = MockMvcBuilders.webAppContextSetup(context)
+                .defaultRequest(MockMvcRequestBuilders.get("")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
+                .build();
+
+        ItemRequestCreateDto itemRequestCreateDto = new ItemRequestCreateDto();
+        itemRequestCreateDto.setDescription("desc");
+        mvcWithoutHeader.perform(post("/requests").content(mapper.writeValueAsString(itemRequestCreateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/requests/1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/requests"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+
+        mvcWithoutHeader.perform(get("/requests/all"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Missing Header")));
+    }
 }

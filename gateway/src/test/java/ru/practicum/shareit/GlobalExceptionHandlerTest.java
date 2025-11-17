@@ -1,6 +1,8 @@
 package ru.practicum.shareit;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,14 +11,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.client.HttpClientErrorException;
-import ru.practicum.shareit.exception.BadRequestException;
-import ru.practicum.shareit.exception.ErrorResponse;
-import ru.practicum.shareit.exception.ForbiddenException;
-import ru.practicum.shareit.exception.NotFoundException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.practicum.shareit.exception.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,6 +61,38 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleMethodArgumentNotValidException() {
+        when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
+        String errorMessage = "Validation failed";
+        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+        BindingResult bindingResult = mock(BindingResult.class);
+        FieldError fieldError = new FieldError("object", "field", errorMessage);
+
+        when(exception.getBindingResult()).thenReturn(bindingResult);
+        when(bindingResult.getAllErrors()).thenReturn(java.util.List.of(fieldError));
+        when(bindingResult.getTarget()).thenReturn(new Object());
+
+        ErrorResponse result = globalExceptionHandler.handleMethodArgumentNotValidException(exception, httpServletRequest);
+        assertNotNull(result);
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatus());
+        assertEquals(errorMessage, result.getMessage());
+    }
+
+    @Test
+    void handleConstraintViolationException() {
+        when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
+        String errorMessage = "Constraint violation";
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        when(violation.getMessage()).thenReturn(errorMessage);
+        ConstraintViolationException exception = new ConstraintViolationException(Set.of(violation));
+
+        ErrorResponse result = globalExceptionHandler.handleIllegalArgument(exception, httpServletRequest);
+        assertNotNull(result);
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatus());
+        assertTrue(result.getMessage().contains(errorMessage));
+    }
+
+    @Test
     void handleIllegalArgumentException() {
         when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
         String errorMessage = "Illegal argument provided";
@@ -67,6 +105,44 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleMethodArgumentTypeMismatchException() {
+        when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
+        String errorMessage = "Type mismatch";
+        MethodArgumentTypeMismatchException exception = mock(MethodArgumentTypeMismatchException.class);
+        when(exception.getMessage()).thenReturn(errorMessage);
+
+        ErrorResponse result = globalExceptionHandler.handleIllegalArgument(exception, httpServletRequest);
+        assertNotNull(result);
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatus());
+        assertEquals(errorMessage, result.getMessage());
+    }
+
+    @Test
+    void handleHttpMessageNotReadableException() {
+        when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
+        String errorMessage = "JSON parse error";
+        HttpMessageNotReadableException exception = mock(HttpMessageNotReadableException.class);
+        when(exception.getMessage()).thenReturn(errorMessage);
+
+        ErrorResponse result = globalExceptionHandler.handleIllegalArgument(exception, httpServletRequest);
+        assertNotNull(result);
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatus());
+        assertEquals(errorMessage, result.getMessage());
+    }
+
+    @Test
+    void handleMissingServletRequestParameterException() {
+        when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
+        String errorMessage = "Missing parameter";
+        MissingServletRequestParameterException exception = new MissingServletRequestParameterException("param", "String");
+
+        ErrorResponse result = globalExceptionHandler.handleIllegalArgument(exception, httpServletRequest);
+        assertNotNull(result);
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatus());
+        assertTrue(result.getMessage().contains("param"));
+    }
+
+    @Test
     void handleBadRequest() {
         when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
         String errorMessage = "Bad request occurred";
@@ -75,6 +151,18 @@ class GlobalExceptionHandlerTest {
         ErrorResponse result = globalExceptionHandler.handleBadRequest(exception, httpServletRequest);
         assertNotNull(result);
         assertEquals(HttpStatus.BAD_REQUEST, result.getStatus());
+        assertEquals(errorMessage, result.getMessage());
+    }
+
+    @Test
+    void handleConflictException() {
+        when(httpServletRequest.getRequestURI()).thenReturn("/test-path");
+        String errorMessage = "Resource already exists";
+        ConflictException exception = new ConflictException(errorMessage);
+
+        ErrorResponse result = globalExceptionHandler.handleConflictException(exception, httpServletRequest);
+        assertNotNull(result);
+        assertEquals(HttpStatus.CONFLICT, result.getStatus());
         assertEquals(errorMessage, result.getMessage());
     }
 
