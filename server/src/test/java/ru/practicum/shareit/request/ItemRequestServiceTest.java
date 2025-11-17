@@ -67,7 +67,7 @@ class ItemRequestServiceTest {
         itemRequestRepository.save(itemRequest1);
 
         itemRequest2 = new ItemRequest();
-        itemRequest2.setDescription("need knife");
+        itemRequest2.setDescription("need hammer");
         itemRequest2.setRequestor(secondUser);
         itemRequest2.setCreated(OffsetDateTime.now().minusDays(1));
         itemRequestRepository.save(itemRequest2);
@@ -190,12 +190,12 @@ class ItemRequestServiceTest {
         Collection<ItemRequestResponseSimpleViewDto> result = itemRequestService.getOthersRequests(requestor.getId());
 
         assertThat(result).hasSize(2);
-        assertThat(result).extracting("description").containsExactlyInAnyOrder("need knife",
+        assertThat(result).extracting("description").containsExactlyInAnyOrder("need hammer",
                 "need saw");
 
         List<ItemRequestResponseSimpleViewDto> resultList = result.stream().toList();
         assertThat(resultList.get(0).getDescription()).isEqualTo("need saw");
-        assertThat(resultList.get(1).getDescription()).isEqualTo("need knife");
+        assertThat(resultList.get(1).getDescription()).isEqualTo("need hammer");
     }
 
     @Test

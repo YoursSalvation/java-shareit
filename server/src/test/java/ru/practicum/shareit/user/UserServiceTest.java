@@ -31,13 +31,13 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         testUser1 = new User();
-        testUser1.setName("dima");
-        testUser1.setEmail("dima@yandex.ru");
+        testUser1.setName("ivan");
+        testUser1.setEmail("ivan@yandex.ru");
         userRepository.save(testUser1);
 
         testUser2 = new User();
-        testUser2.setName("katya");
-        testUser2.setEmail("katya@yandex.ru");
+        testUser2.setName("sofa");
+        testUser2.setEmail("sofa@yandex.ru");
         userRepository.save(testUser2);
     }
 
@@ -46,8 +46,8 @@ class UserServiceTest {
         List<UserResponseDto> result = userService.getList();
 
         assertThat(result).hasSize(2);
-        assertThat(result).extracting("name").containsExactlyInAnyOrder("dima", "katya");
-        assertThat(result).extracting("email").containsExactlyInAnyOrder("dima@yandex.ru", "katya@yandex.ru");
+        assertThat(result).extracting("name").containsExactlyInAnyOrder("ivan", "sofa");
+        assertThat(result).extracting("email").containsExactlyInAnyOrder("ivan@yandex.ru", "sofa@yandex.ru");
     }
 
     @Test
@@ -56,8 +56,8 @@ class UserServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(testUser1.getId());
-        assertThat(result.getName()).isEqualTo("dima");
-        assertThat(result.getEmail()).isEqualTo("dima@yandex.ru");
+        assertThat(result.getName()).isEqualTo("ivan");
+        assertThat(result.getEmail()).isEqualTo("ivan@yandex.ru");
     }
 
     @Test
@@ -84,7 +84,7 @@ class UserServiceTest {
     void createDuplicateEmail() {
         UserCreateDto createDto = new UserCreateDto();
         createDto.setName("Another User");
-        createDto.setEmail("dima@yandex.ru");
+        createDto.setEmail("ivan@yandex.ru");
 
         assertThrows(ConflictException.class, () -> userService.create(createDto));
     }
@@ -92,37 +92,37 @@ class UserServiceTest {
     @Test
     void update() {
         UserUpdateDto updateDto = new UserUpdateDto();
-        updateDto.setName("updated dima");
-        updateDto.setEmail("dima2@yandex.ru");
+        updateDto.setName("updated ivan");
+        updateDto.setEmail("ivan2@yandex.ru");
 
         UserResponseDto result = userService.update(updateDto, testUser1.getId());
 
-        assertThat(result.getName()).isEqualTo("updated dima");
-        assertThat(result.getEmail()).isEqualTo("dima2@yandex.ru");
+        assertThat(result.getName()).isEqualTo("updated ivan");
+        assertThat(result.getEmail()).isEqualTo("ivan2@yandex.ru");
         assertThat(result.getId()).isEqualTo(testUser1.getId());
     }
 
     @Test
     void updateOnlyName() {
         UserUpdateDto updateDto = new UserUpdateDto();
-        updateDto.setName("updated dima");
+        updateDto.setName("updated ivan");
 
         UserResponseDto result = userService.update(updateDto, testUser1.getId());
 
-        assertThat(result.getName()).isEqualTo("updated dima");
-        assertThat(result.getEmail()).isEqualTo("dima@yandex.ru"); // Остался прежним
+        assertThat(result.getName()).isEqualTo("updated ivan");
+        assertThat(result.getEmail()).isEqualTo("ivan@yandex.ru"); // Остался прежним
         assertThat(result.getId()).isEqualTo(testUser1.getId());
     }
 
     @Test
     void updateOnlyEmail() {
         UserUpdateDto updateDto = new UserUpdateDto();
-        updateDto.setEmail("dima.updated@yandex.ru");
+        updateDto.setEmail("ivan.updated@yandex.ru");
 
         UserResponseDto result = userService.update(updateDto, testUser1.getId());
 
-        assertThat(result.getName()).isEqualTo("dima");
-        assertThat(result.getEmail()).isEqualTo("dima.updated@yandex.ru");
+        assertThat(result.getName()).isEqualTo("ivan");
+        assertThat(result.getEmail()).isEqualTo("ivan.updated@yandex.ru");
         assertThat(result.getId()).isEqualTo(testUser1.getId());
     }
 
@@ -137,7 +137,7 @@ class UserServiceTest {
     @Test
     void updateDuplicateEmail() {
         UserUpdateDto updateDto = new UserUpdateDto();
-        updateDto.setEmail("katya@yandex.ru");
+        updateDto.setEmail("sofa@yandex.ru");
 
         assertThrows(ConflictException.class, () -> userService.update(updateDto, testUser1.getId()));
     }
@@ -145,19 +145,19 @@ class UserServiceTest {
     @Test
     void updateSameEmailForSameUser() {
         UserUpdateDto updateDto = new UserUpdateDto();
-        updateDto.setEmail("dima@yandex.ru");
-        updateDto.setName("updated dima");
+        updateDto.setEmail("ivan@yandex.ru");
+        updateDto.setName("updated ivan");
 
         UserResponseDto result = userService.update(updateDto, testUser1.getId());
 
-        assertThat(result.getEmail()).isEqualTo("dima@yandex.ru");
-        assertThat(result.getName()).isEqualTo("updated dima");
+        assertThat(result.getEmail()).isEqualTo("ivan@yandex.ru");
+        assertThat(result.getName()).isEqualTo("updated ivan");
     }
 
     @Test
     void updateDuplicateEmailCaseInsensitive() {
         UserUpdateDto updateDto = new UserUpdateDto();
-        updateDto.setEmail("katya@yandex.ru".toUpperCase());
+        updateDto.setEmail("sofa@yandex.ru".toUpperCase());
 
         assertThrows(ConflictException.class, () -> userService.update(updateDto, testUser1.getId()));
     }
@@ -198,7 +198,7 @@ class UserServiceTest {
 
         List<UserResponseDto> allUsers = userService.getList();
         assertThat(allUsers).hasSize(4);
-        assertThat(allUsers).extracting("email").contains("user1@test.com", "user2@test.com", "dima@yandex.ru", "katya@yandex.ru");
+        assertThat(allUsers).extracting("email").contains("user1@test.com", "user2@test.com", "ivan@yandex.ru", "sofa@yandex.ru");
     }
 
     @Test
