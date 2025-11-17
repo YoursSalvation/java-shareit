@@ -210,7 +210,7 @@ class ItemRequestServiceTest {
         Collection<ItemRequestResponseSimpleViewDto> result = itemRequestService.getOthersRequests(requestor.getId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.iterator().next().getDescription()).isEqualTo("need saw");
+        assertThat(result.iterator().next().getDescription()).isEqualTo("need hammer");
         assertThat(result).extracting("description").doesNotContain("need saw");
     }
 
@@ -231,7 +231,7 @@ class ItemRequestServiceTest {
         assertThat(sortedRequests).hasSize(3);
         assertThat(sortedRequests.get(0).getDescription()).isEqualTo("second request");
         assertThat(sortedRequests.get(1).getDescription()).isEqualTo("first request");
-        assertThat(sortedRequests.get(2).getDescription()).isEqualTo("need drill");
+        assertThat(sortedRequests.get(2).getDescription()).isEqualTo("need saw");
     }
 
     @Test
