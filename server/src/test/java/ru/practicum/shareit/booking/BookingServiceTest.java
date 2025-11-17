@@ -16,6 +16,7 @@ import ru.practicum.shareit.user.UserRepository;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -230,5 +231,151 @@ class BookingServiceTest {
 
         Collection<BookingResponseDto> ownerBookings = bookingService.getOwnerBookings(owner.getId(), BookingApiState.ALL);
         assertThat(ownerBookings).hasSize(5);
+    }
+
+    @Test
+    void approveRejectErrors() {
+        assertThrows(NotFoundException.class, () -> bookingService.approveReject(owner.getId(), 99999L, true));
+
+        assertThrows(ForbiddenException.class, () -> bookingService.approveReject(99999L, waitingBooking.getId(), true));
+
+        assertThrows(ForbiddenException.class, () -> bookingService.approveReject(booker.getId(), waitingBooking.getId(), true));
+
+        assertThrows(ForbiddenException.class, () -> bookingService.approveReject(owner.getId(), approvedBooking.getId(), true));
+    }
+
+    @Test
+    void getBookerBookings() {
+        Collection<BookingResponseDto> result = bookingService.getBookerBookings(booker.getId(), BookingApiState.ALL);
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting("status")
+                .containsExactlyInAnyOrder(BookingStatus.WAITING, BookingStatus.APPROVED, BookingStatus.REJECTED);
+
+        result = bookingService.getBookerBookings(booker.getId(), BookingApiState.WAITING);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.WAITING);
+
+        result = bookingService.getBookerBookings(booker.getId(), BookingApiState.REJECTED);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.REJECTED);
+
+        result = bookingService.getBookerBookings(booker.getId(), BookingApiState.PAST);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.APPROVED);
+        assertThat(result.iterator().next().getEnd()).isBefore(OffsetDateTime.now());
+
+        Booking futureBooking = new Booking();
+        futureBooking.setStart(OffsetDateTime.now().plusDays(10));
+        futureBooking.setEnd(OffsetDateTime.now().plusDays(20));
+        futureBooking.setBooker(booker);
+        futureBooking.setItem(availableItem);
+        futureBooking.setStatus(BookingStatus.APPROVED);
+        bookingRepository.save(futureBooking);
+
+        result = bookingService.getBookerBookings(booker.getId(), BookingApiState.FUTURE);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.APPROVED);
+        assertThat(result.iterator().next().getStart()).isAfter(OffsetDateTime.now());
+
+        Booking currentBooking = new Booking();
+        currentBooking.setStart(OffsetDateTime.now().minusDays(1));
+        currentBooking.setEnd(OffsetDateTime.now().plusDays(1));
+        currentBooking.setBooker(booker);
+        currentBooking.setItem(availableItem);
+        currentBooking.setStatus(BookingStatus.APPROVED);
+        bookingRepository.save(currentBooking);
+
+        result = bookingService.getBookerBookings(booker.getId(), BookingApiState.CURRENT);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.APPROVED);
+        BookingResponseDto current = result.iterator().next();
+        assertThat(current.getStart()).isBefore(OffsetDateTime.now());
+        assertThat(current.getEnd()).isAfter(OffsetDateTime.now());
+
+        assertThrows(NotFoundException.class, () -> bookingService.getBookerBookings(99999L, BookingApiState.ALL));
+
+        result = bookingService.getBookerBookings(anotherUser.getId(), BookingApiState.ALL);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getOwnerBookings() {
+        Collection<BookingResponseDto> result = bookingService.getOwnerBookings(owner.getId(), BookingApiState.ALL);
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting("status")
+                .containsExactlyInAnyOrder(BookingStatus.WAITING, BookingStatus.APPROVED, BookingStatus.REJECTED);
+
+        result = bookingService.getOwnerBookings(owner.getId(), BookingApiState.WAITING);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.WAITING);
+
+        result = bookingService.getOwnerBookings(owner.getId(), BookingApiState.REJECTED);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.REJECTED);
+
+        result = bookingService.getOwnerBookings(owner.getId(), BookingApiState.PAST);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.APPROVED);
+        assertThat(result.iterator().next().getEnd()).isBefore(OffsetDateTime.now());
+
+        Booking futureBooking = new Booking();
+        futureBooking.setStart(OffsetDateTime.now().plusDays(15));
+        futureBooking.setEnd(OffsetDateTime.now().plusDays(16));
+        futureBooking.setBooker(booker);
+        futureBooking.setItem(availableItem);
+        futureBooking.setStatus(BookingStatus.APPROVED);
+        bookingRepository.save(futureBooking);
+
+        result = bookingService.getOwnerBookings(owner.getId(), BookingApiState.FUTURE);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.APPROVED);
+        assertThat(result.iterator().next().getStart()).isAfter(OffsetDateTime.now());
+
+        Booking currentBooking = new Booking();
+        currentBooking.setStart(OffsetDateTime.now().minusDays(1));
+        currentBooking.setEnd(OffsetDateTime.now().plusDays(1));
+        currentBooking.setBooker(booker);
+        currentBooking.setItem(availableItem);
+        currentBooking.setStatus(BookingStatus.APPROVED);
+        bookingRepository.save(currentBooking);
+
+        result = bookingService.getOwnerBookings(owner.getId(), BookingApiState.CURRENT);
+        assertThat(result).hasSize(1);
+        assertThat(result.iterator().next().getStatus()).isEqualTo(BookingStatus.APPROVED);
+        BookingResponseDto current = result.iterator().next();
+        assertThat(current.getStart()).isBefore(OffsetDateTime.now());
+        assertThat(current.getEnd()).isAfter(OffsetDateTime.now());
+
+        assertThrows(NotFoundException.class, () -> bookingService.getOwnerBookings(99999L, BookingApiState.ALL));
+
+        result = bookingService.getOwnerBookings(anotherUser.getId(), BookingApiState.ALL);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void bookingsSortedByStartDescending() {
+        Booking earlierBooking = new Booking();
+        earlierBooking.setStart(OffsetDateTime.now().plusDays(7));
+        earlierBooking.setEnd(OffsetDateTime.now().plusDays(8));
+        earlierBooking.setBooker(booker);
+        earlierBooking.setItem(availableItem);
+        earlierBooking.setStatus(BookingStatus.WAITING);
+        bookingRepository.save(earlierBooking);
+
+        Booking laterBooking = new Booking();
+        laterBooking.setStart(OffsetDateTime.now().plusDays(10));
+        laterBooking.setEnd(OffsetDateTime.now().plusDays(11));
+        laterBooking.setBooker(booker);
+        laterBooking.setItem(availableItem);
+        laterBooking.setStatus(BookingStatus.WAITING);
+        bookingRepository.save(laterBooking);
+
+        List<BookingResponseDto> bookingsList = bookingService.getBookerBookings(booker.getId(), BookingApiState.ALL)
+                .stream()
+                .toList();
+
+        for (int i = 0; i < bookingsList.size() - 1; i++) {
+            assertThat(bookingsList.get(i).getStart()).isAfterOrEqualTo(bookingsList.get(i + 1).getStart());
+        }
     }
 }
