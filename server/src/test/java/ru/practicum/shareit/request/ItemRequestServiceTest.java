@@ -182,7 +182,7 @@ class ItemRequestServiceTest {
     @Test
     void getOthersRequests() {
         ItemRequest thirdRequest = new ItemRequest();
-        thirdRequest.setDescription("need tools");
+        thirdRequest.setDescription("need saw");
         thirdRequest.setRequestor(thirdUser);
         thirdRequest.setCreated(OffsetDateTime.now().minusHours(1));
         itemRequestRepository.save(thirdRequest);
@@ -190,12 +190,12 @@ class ItemRequestServiceTest {
         Collection<ItemRequestResponseSimpleViewDto> result = itemRequestService.getOthersRequests(requestor.getId());
 
         assertThat(result).hasSize(2);
-        assertThat(result).extracting("description").containsExactlyInAnyOrder("need hammer",
-                "need tools");
+        assertThat(result).extracting("description").containsExactlyInAnyOrder("need knife",
+                "need saw");
 
         List<ItemRequestResponseSimpleViewDto> resultList = result.stream().toList();
-        assertThat(resultList.get(0).getDescription()).isEqualTo("need tools");
-        assertThat(resultList.get(1).getDescription()).isEqualTo("need hammer");
+        assertThat(resultList.get(0).getDescription()).isEqualTo("need saw");
+        assertThat(resultList.get(1).getDescription()).isEqualTo("need knife");
     }
 
     @Test
@@ -210,8 +210,8 @@ class ItemRequestServiceTest {
         Collection<ItemRequestResponseSimpleViewDto> result = itemRequestService.getOthersRequests(requestor.getId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.iterator().next().getDescription()).isEqualTo("need hammer");
-        assertThat(result).extracting("description").doesNotContain("need drill");
+        assertThat(result.iterator().next().getDescription()).isEqualTo("need saw");
+        assertThat(result).extracting("description").doesNotContain("need saw");
     }
 
     @Test

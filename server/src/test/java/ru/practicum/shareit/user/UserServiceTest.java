@@ -198,7 +198,7 @@ class UserServiceTest {
 
         List<UserResponseDto> allUsers = userService.getList();
         assertThat(allUsers).hasSize(4);
-        assertThat(allUsers).extracting("email").contains("user1@test.com", "user2@test.com", "ivan@yandex.ru", "sofa@yandex.ru");
+        assertThat(allUsers).extracting("email").contains("user1@test.com", "user2@test.com", "dima@yandex.ru", "katya@yandex.ru");
     }
 
     @Test
